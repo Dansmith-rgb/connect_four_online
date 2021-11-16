@@ -1,35 +1,31 @@
-import numpy as np
 import pygame
 import sys
 import math
 from constants import *
 from client import Network
-import pickle
 
 BLUE = (0, 0, 255)
 BLACK = (0, 0, 0)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 
-#ROW_COUNT = 6
-#COLUMN_COUNT = 7
-
-#board = create_board()
-#print_board(board)
-#game_over = False
-turn = 0
-
 pygame.init()
 pygame.font.init()
 
 
-def menu_screen(win, name):
+def menu_screen(win):
+    """
+    This is the menu screen function.
+    It will tell you if the server is on and off
+
+    :param win: where to place text
+    :type win: surface
+    """
     global bo, chessbg
     run = True
     offline = False
 
     while run:
-        #win.blit(chessbg, (0, 0))
         small_font = pygame.font.SysFont("comicsans", 50)
 
         if offline:
@@ -57,8 +53,21 @@ def menu_screen(win, name):
 
 
 def redraw_gameWindow(win, bo, color, ready):
-    #win.blit(bo.board, (0, 0))
+    """
+    This function draws most of the writing on the screen
+
+    :param win: what to write the text on
+    :type win: surface
+    :param bo: The board
+    :type bo: object
+    :param color: What color the user is
+    :type color: string
+    :param ready: This will be true or false depending on if everyone is ready
+    :type ready: Boolean
+    """
+    # Calling draw board function
     bo.draw_board(win)
+
     font = pygame.font.SysFont("comicsans", 30)
 
     txt = font.render("Press q to Quit", 1, (255, 255, 255))
@@ -78,24 +87,32 @@ def redraw_gameWindow(win, bo, color, ready):
 
     if not color == "s":
         font = pygame.font.SysFont("comicsans", 30)
-        if color == "w":
-            txt3 = font.render("YOU ARE WHITE", 1, (255, 0, 0))
+        if color == "r":
+            txt3 = font.render("YOU ARE RED", 1, (255, 0, 0))
             win.blit(txt3, (WIDTH / 2 - txt3.get_width() / 2, 10))
         else:
-            txt3 = font.render("YOU ARE BLACK", 1, (255, 0, 0))
+            txt3 = font.render("YOU ARE YELLOW", 1, (255, 0, 0))
             win.blit(txt3, (WIDTH / 2 - txt3.get_width() / 2, 10))
 
         if bo.turn == color:
             txt3 = font.render("YOUR TURN", 1, (255, 0, 0))
-            win.blit(txt3, (WIDTH / 2 - txt3.get_width() / 2, 700))
+            win.blit(txt3, (600, 10))
         else:
             txt3 = font.render("THEIR TURN", 1, (255, 0, 0))
-            win.blit(txt3, (WIDTH / 2 - txt3.get_width() / 2, 700))
+            win.blit(txt3, (600, 10))
 
     pygame.display.update()
 
 
 def end_screen(win, text):
+    """
+    end screen function
+
+    :param win: where to place text
+    :type win: surface
+    :param text:  Text to display on screen
+    :type text: string
+    """
     pygame.font.init()
     font = pygame.font.SysFont("comicsans", 80)
     txt = font.render(text, 1, (255, 0, 0))
@@ -109,7 +126,8 @@ def end_screen(win, text):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                quit()
+                sys.exit()
+
             elif event.type == pygame.KEYDOWN:
                 run = False
             elif event.type == pygame.USEREVENT + 1:
@@ -117,28 +135,35 @@ def end_screen(win, text):
 
 
 def connect():
+    """
+    connect to server function
+    """
     global n
     n = Network()
     return n.board
 
 
 def main(win):
+    """
+    This is the main function of the game, handles all the game loops
+
+    :param win: where to display counter ect on the screen.
+    :type win: surface
+    """
 
     global turn, bo, name
     game_over = False
-    turn = 0
 
     color = bo.start_user
-    print(color)
 
-    count = 0
-
-    #bo = n.send("update_moves")
     bo = n.send("name " + name)
     clock = pygame.time.Clock()
     pygame.display.update()
-    #myfont = pygame.font.SysFont("monospace", 75)
+
+    # Game loop
     while game_over == False:
+        bo = n.send("get")
+        clock.tick(30)
         try:
             ready = bo.ready
             redraw_gameWindow(win, bo, color, ready)
@@ -148,12 +173,15 @@ def main(win):
             game_over = False
             break
 
+        # Check for winner
         if not color == "s":
+
             if bo.winning_move("y"):
                 bo = n.send("winner y")
             elif bo.winning_move("r"):
                 bo = n.send("winner r")
 
+        # If winner display who won by calling function
         if bo.winner == "y":
             end_screen(win, "Yellow is the winner")
             game_over = False
@@ -161,81 +189,43 @@ def main(win):
             end_screen(win, "Red is the winner")
             game_over = False
 
+        # Pygame loop
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-                pygame.exit()
-                exit()
-                game_over = True
 
             if event.type == pygame.MOUSEMOTION:
-                if color == bo.turn and bo.ready == True:
+                # Draw counter at top of screen
+                if bo.ready == True:
                     pygame.draw.rect(win, BLACK, (0, 0, WIDTH, SQUARESIZE))
                     posx = event.pos[0]
-                    if bo.turn == "r":
+                    if color == "r":
                         pygame.draw.circle(win, RED,
                                            (posx, int(SQUARESIZE / 2)), RADIUS)
                     else:
                         pygame.draw.circle(win, YELLOW,
                                            (posx, int(SQUARESIZE / 2)), RADIUS)
+
             pygame.display.update()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                print("yes")
                 pygame.draw.rect(win, BLACK, (0, 0, WIDTH, SQUARESIZE))
-                # print(event.pos)
-                # Ask for player 1 input
-                if bo.turn == "y":
+                # Ask for player input
+                print(bo.turn)
+                if color == bo.turn and bo.ready:
+
                     posx = event.pos[0]
                     col = int(math.floor(posx / SQUARESIZE))
 
                     if bo.is_valid_location(col):
                         row = bo.get_next_open_row(col)
                         bo = n.send("select " + str(row) + " " + str(col) +
-                                    " " +
-                                    color)  #drop_piece(board, row, col, 1)
+                                    " " + color)
 
-                        #if winning_move(board, 1):
-                        #   print("Player 1 Wins!!!! Congrats!!!")
-                        #   label = myfont.render("Player 1 Wins!", 1, RED)
-                        #   self.SCREEN.blit(label, (40, 10))
-                        #   game_over = True
-                        #else:
-                        #label = myfont.render("Players 2 go!", 2, RED)
-                        #self.SCREEN.blit(label, (40, 10))
-
-                # Ask for player 2 input
-
-                else:
-                    posx = event.pos[0]
-                    col = int(math.floor(posx / SQUARESIZE))
-
-                    if bo.is_valid_location(col):
-                        row = bo.get_next_open_row(col)
-                        bo = n.send("select " + str(row) + " " + str(col) +
-                                    " " +
-                                    color)  #drop_piece(board, row, col, 2)
-
-                        #if self.winning_move(board, 2):
-                        #print("Player 2 Wins!!!! Congrats!!!")
-                        #label = myfont.render("Player 2 Wins!", 1, YELLOW)
-                        #screen.blit(label, (40, 10))
-                        #game_over = True
-                        #else:
-                        #label = myfont.render("Players 1 go!", 2, YELLOW)
-                        #screen.blit(label, (40, 10))
-
-                #bo.draw_board(board)
-
-                turn += 1
-                turn = turn % 2
-
-                if game_over:
-                    #pygame.time.wait(3000)
-                    print("game_over")
-
-    print(game_over)
+    n.disconnect()
 
 
+# Getting name of player, setting up screen and calling the main
+# function to run the game.
 name = input("Please type your name: ")
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Connect 4 Online")

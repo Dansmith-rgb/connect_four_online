@@ -1,5 +1,4 @@
 import pygame
-import math
 from constants import *
 
 
@@ -9,10 +8,6 @@ class Board:
         self.cols = cols
 
         self.ready = False
-
-        self.last = None
-
-        self.copy = True
 
         self.board = [[0 for x in range(8)] for _ in range(rows)]
 
@@ -31,6 +26,12 @@ class Board:
         self.HEIGHT = (self.ROW_COUNT + 1) * self.SQUARESIZE
 
     def winning_move(self, piece):
+        """
+        Check for winning move
+
+        :param piece: color of the counter
+        :type piece: string
+        """
         # Check horizontal locations for win
         for c in range(self.COL_COUNT - 3):
             for r in range(self.ROW_COUNT):
@@ -67,6 +68,12 @@ class Board:
                     return True
 
     def draw_board(self, screen):
+        """
+        This function will draw the board and the counters in the board
+
+        :param screen: what to draw on
+        :type screen: object
+        """
         for c in range(self.COL_COUNT):
             for r in range(self.ROW_COUNT):
                 pygame.draw.rect(
@@ -81,31 +88,52 @@ class Board:
 
         for c in range(self.COL_COUNT):
             for r in range(self.ROW_COUNT):
-                if self.board[r][c] == 1:
+                if self.board[r][c] == "r":
                     pygame.draw.circle(
-                        self.SCREEN, RED,
+                        screen, RED,
                         (int(c * self.SQUARESIZE + self.SQUARESIZE / 2),
                          self.HEIGHT -
                          int(r * self.SQUARESIZE + self.SQUARESIZE / 2)),
                         self.RADIUS)
-                elif self.board[r][c] == 2:
+                elif self.board[r][c] == "y":
                     pygame.draw.circle(
-                        self.SCREEN, YELLOW,
+                        screen, YELLOW,
                         (int(c * self.SQUARESIZE + self.SQUARESIZE / 2),
                          self.HEIGHT -
                          int(r * self.SQUARESIZE + self.SQUARESIZE / 2)),
                         self.RADIUS)
 
     def drop_piece(self, row, col, color):
+        """
+        This function will update the row and column a 
+        person wants a counter to be dropped
+
+        :param row: which row to put counter in
+        :type row: int
+        :param col: which column to put counter in
+        :type col: int
+        :param color: The colour of the counter
+        :type color: string
+        """
         self.board[row][col] = color
 
     def is_valid_location(self, col):
+        """
+        Check if selected col is valid
+
+        :param col: where to drop counter
+        :type col: int
+        """
         return self.board[self.ROW_COUNT - 1][col] == 0
 
     def get_next_open_row(self, col):
+        """
+        This function will get the next available 
+        row which is available
+
+        :param col: which column to place counter
+        :type col: int
+        """
         for r in range(self.ROW_COUNT):
             if self.board[r][col] == 0:
                 return r
-
-    def print_board(self):
-        print(self.board)

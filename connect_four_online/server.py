@@ -2,21 +2,20 @@ import socket
 from _thread import *
 from board import Board
 import pickle
-import time
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server = "192.168.1.97"
 port = 5555
 
-#server_ip = socket.gethostbyname(server)
-
+# trying to set up socket to listen for incoming connectins.
 try:
     s.bind((server, port))
 
 except socket.error as e:
     print(str(e))
 
+# Starting to listen for connectins.
 s.listen()
 print("[START] Waiting for a connection")
 
@@ -29,6 +28,10 @@ specs = 0
 
 
 def read_specs():
+    """
+    Checks to see if specs.txt exists and creates a new one
+    if there isn't one
+    """
     global spectartor_ids
 
     spectartor_ids = []
@@ -42,15 +45,27 @@ def read_specs():
 
 
 def threaded_client(conn, game, spec=False):
+    """
+    This is where the server recieves information about the game
+    and relays to everyone in that game
+
+    :param conn: allows the server to send and recieve data 
+    on that connection
+    :type conn: socket object
+    :param game: Tells server what game somebody is in
+    :type game: int
+    :param spec: if true you are a spectator, defaults to False
+    :type spec: bool, optional
+    """
     global pos, games, currentId, specs, connections
 
     if not spec:
         name = None
         bo = games[game]
-        print(connections)
-        connections += 1
+
         if connections % 2 == 0:
             currentId = "y"
+
         else:
             currentId = "r"
 
@@ -58,38 +73,52 @@ def threaded_client(conn, game, spec=False):
 
         # Pickle the object and send it to the server
         data_string = pickle.dumps(bo)
-
-        if currentId == "y":
+        # If r(second player of the game) has joined then make the
+        # game ready
+        if currentId == "r":
             bo.ready = True
-
         conn.send(data_string)
-        #connections += 1
-        print(connections)
+        connections += 1
+
+        # Start while loop
         while True:
             if game not in games:
                 break
 
             try:
+                # If server doesn't recieve any data break from loop
                 d = conn.recv(8192 * 3)
                 data = d.decode("utf-8")
                 if not d:
                     break
                 else:
+                    # If the data has select and space and all the
+                    # other variables then it will go inside the if statement
                     if data.count("select") > 0:
+                        # It splits up the data it has been sent
                         all = data.split(" ")
-                        col = int(all[1])
-                        row = int(all[2])
+                        row = int(all[1])
+                        col = int(all[2])
                         color = all[3]
-                        bo.drop_piece(col, row, color)
-                        print("yeah")
+                        # It calls a function which will drop a piece on the board
+                        bo.drop_piece(row, col, color)
+                        # It then changes who's turn it is
+                        if bo.turn == "r":
+                            bo.turn = "y"
+                        else:
+                            bo.turn = "r"
 
-                    if data == "winner b":
-                        bo.winner = "b"
-                        print("[GAME] Player b won in game", game)
-                    if data == "winner w":
-                        bo.winner = "w"
-                        print("[GAME] Player w won in game", game)
+                    # If the data has winner y in it then set the board winner to y
+                    if data == "winner y":
+                        bo.winner = "y"
+                        print("[GAME] Player y won in game", game)
+                    # If the data has winner r in it then set the board winner to r
+                    if data == "winner r":
+                        bo.winner = "r"
+                        print("[GAME] Player r won in game", game)
 
+                    # If data has name and somethinf after then check
+                    # currentId and set players name
                     if data.count("name") == 1:
 
                         name = data.split(" ")[1]
@@ -99,9 +128,12 @@ def threaded_client(conn, game, spec=False):
                         elif currentId == "r":
                             bo.p1Name = name
 
+                    # Package all data up to send to players
                     sendData = pickle.dumps(bo)
-                    #print("Sending board to player", currentId, "in game", game)
+                    print("Sending board to player", currentId, "in game",
+                          game)
 
+                # Send all data to player
                 conn.sendall(sendData)
 
             except Exception as e:
@@ -114,9 +146,11 @@ def threaded_client(conn, game, spec=False):
         except:
             pass
         print("[DISCONNECT] Player", name, "left game", game)
+        # Close connection
         conn.close()
 
 
+# Start loop to get game or create new game and call main function
 while True:
     if connections < 6:
         conn, addr = s.accept()
