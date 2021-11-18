@@ -115,7 +115,6 @@ def threaded_client(conn, game, spec=False):
                     # If the data has winner r in it then set the board winner to r
                     if data == "winner r":
                         bo.winner = "r"
-                        print("[GAME] Player r won in game", game)
 
                     # If data has name and somethinf after then check
                     # currentId and set players name
@@ -130,8 +129,6 @@ def threaded_client(conn, game, spec=False):
 
                     # Package all data up to send to players
                     sendData = pickle.dumps(bo)
-                    print("Sending board to player", currentId, "in game",
-                          game)
 
                 # Send all data to player
                 conn.sendall(sendData)

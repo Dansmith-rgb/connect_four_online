@@ -71,7 +71,7 @@ def redraw_gameWindow(win, bo, color, ready):
     font = pygame.font.SysFont("comicsans", 30)
 
     txt = font.render("Press q to Quit", 1, (255, 255, 255))
-    win.blit(txt, (10, 20))
+    win.blit(txt, (10, 10))
 
     if color == "s":
         txt3 = font.render("SPECTATOR MODE", 1, (255, 0, 0))
@@ -96,10 +96,10 @@ def redraw_gameWindow(win, bo, color, ready):
 
         if bo.turn == color:
             txt3 = font.render("YOUR TURN", 1, (255, 0, 0))
-            win.blit(txt3, (600, 10))
+            win.blit(txt3, (550, 10))
         else:
             txt3 = font.render("THEIR TURN", 1, (255, 0, 0))
-            win.blit(txt3, (600, 10))
+            win.blit(txt3, (550, 10))
 
     pygame.display.update()
 
@@ -229,4 +229,4 @@ def main(win):
 name = input("Please type your name: ")
 win = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Connect 4 Online")
-menu_screen(win, name)
+menu_screen(win)
