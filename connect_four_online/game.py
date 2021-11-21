@@ -210,7 +210,6 @@ def main(win):
             if event.type == pygame.MOUSEBUTTONDOWN:
                 pygame.draw.rect(win, BLACK, (0, 0, WIDTH, SQUARESIZE))
                 # Ask for player input
-                print(bo.turn)
                 if color == bo.turn and bo.ready:
 
                     posx = event.pos[0]
